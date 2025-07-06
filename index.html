@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>登录界面</title>
+    <style>
+        /* 全局基础设置 */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            background: #000;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 毛玻璃内容容器 */
+        header, main, footer {
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 12px;
+            margin: 20px;
+            padding: 20px;
+        }
+
+        /* 光晕（使用伪元素或自定义 div） */
+        body::before,
+        body::after {
+            content: "";
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 0, 150, 0.6), transparent 70%);
+            filter: blur(120px);
+            z-index: 1;
+        }
+
+        body::after {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.5), transparent 70%);
+            top: 50%;
+            left: 60%;
+            transform: translate(-50%, -50%);
+        }
+
+        body::before {
+            top: 20%;
+            left: 20%;
+        }
+
+        /* ===== 登录容器 ===== */
+        .login-container {
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 12px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            margin: 100px auto;
+            text-align: center;
+        }
+
+        /* 标题 */
+        .login-container h1 {
+            margin-bottom: 30px;
+            font-weight: normal;
+        }
+
+        /* 表单整体 */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 输入框：灰色毛玻璃效果 */
+        .login-form input {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #fff;
+            font-size: 16px;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            outline: none;
+        }
+
+        /* 输入框占满宽度 */
+        .login-form input::placeholder {
+            color: #ddd;
+        }
+
+        /* 登录按钮：蓝色，圆角 */
+        .login-form button {
+            background: #007bff;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .login-form button:hover {
+            background: #0056b3;
+        }
+
+        .login-form button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        /* 错误信息样式 */
+        .error-message {
+            color: #ff4444;
+            margin-bottom: 15px;
+            display: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <h1>欢迎登录</h1>
+        <form class="login-form" id="loginForm">
+            <input type="text" id="username" placeholder="用户名" required />
+            <input type="password" id="password" placeholder="密码" required />
+            <div id="error-message" class="error-message"></div>
+            <button type="submit" id="submitButton">登录</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const userInput = document.getElementById('username');
+            const pwdInput = document.getElementById('password');
+            const errorMessage = document.getElementById('error-message');
+            const submitButton = document.getElementById('submitButton');
+
+            loginForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                submitButton.disabled = true;
+
+                const user = userInput.value.trim();
+                const pwd = pwdInput.value.trim();
+
+                if (user === '' || pwd === '') {
+                    errorMessage.textContent = '请输入用户名和密码';
+                    errorMessage.style.display = 'block';
+                    submitButton.disabled = false;
+                    return;
+                }
+
+                const validUser = 'LuvRene';
+                const validPassword = '000000';
+
+                setTimeout(() => {
+                    if (user === validUser && pwd === validPassword) {
+                        window.location.href = 'page.html';
+                    } else {
+                        errorMessage.textContent = '用户名或密码错误，请重新输入';
+                        errorMessage.style.display = 'block';
+                        userInput.value = '';
+                        pwdInput.value = '';
+                        userInput.focus();
+                        submitButton.disabled = false;
+                    }
+                }, 500);
+            });
+
+            // 当用户开始输入时隐藏错误信息
+            userInput.addEventListener('input', function() {
+                errorMessage.style.display = 'none';
+                submitButton.disabled = false;
+            });
+
+            pwdInput.addEventListener('input', function() {
+                errorMessage.style.display = 'none';
+                submitButton.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>

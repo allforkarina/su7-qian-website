@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数据展示页</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- 引入 Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet @1.9.4/dist/leaflet.css" />
+  <style>
+    /* 如果需要自定义地图样式 */
+    #map {
+      width: 100%;
+      height: 300px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-container">
+    <h1>欢迎回来，LuvRene！</h1>
+
+    <div class="data-card">
+      <h2>用户信息</h2>
+      <p><strong>用户名：</strong> Administrator</p>
+      <p><strong>邮箱：</strong> test@example.com</p>
+      <p><strong>注册时间：</strong> 2025-06-04</p>
+      <p><strong>当前时间：</strong> <span id="current-time">加载中...</span></p>
+    </div>
+
+    <div class="history-data-card">
+      <h2>历史数据</h2>
+
+      <!-- 下拉栏 -->
+      <label for="dateSelector"><strong>选择日期：</strong></label>
+      <select id="dateSelector"></select>
+
+      <!-- 动态数据显示区域 -->
+      <div id="historyData">
+        <p><strong>目标数量 (NumTarget)：</strong> <span id="numTarget">--</span></p>
+        <p><strong>最小距离 (MinDistance)：</strong> <span id="minDistance">--</span></p>
+        <p><strong>位置路径地图：</strong></p>
+        <div id="map"></div>
+      </div>
+
+      <div class="logout-container">
+        <button id="logoutBtn">退出登录</button>
+      </div>
+
+    </div>
+
+    <div class="data-card">
+      <h2>安全系数</h2>
+      <div id="safety-indicator" class="status-block safe"></div>
+      <p id="safety-level">当前状态：安全</p>
+    </div>
+
+
+  </div>
+
+  <!-- 引入 Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <script>
+    // ========== 实时时间刷新 ==========
+    function getCurrentTime() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    document.getElementById('current-time').textContent = getCurrentTime();
+    setInterval(() => {
+      document.getElementById('current-time').textContent = getCurrentTime();
+    }, 1000);
+
+    // ========== 生成从注册日起至今的所有日期 ==========
+    function generateDateOptions(startDateStr) {
+      const startDate = new Date(startDateStr);
+      const endDate = new Date();
+
+      const optionsContainer = document.getElementById("dateSelector");
+
+      const dateList = [];
+
+      let currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        const dateStr = currentDate.toISOString().split("T")[0];
+        dateList.push(dateStr);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // 倒序插入选项
+      dateList.reverse().forEach(dateStr => {
+        const option = document.createElement("option");
+        option.value = dateStr;
+        option.textContent = dateStr;
+        optionsContainer.appendChild(option);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      generateDateOptions("2025-06-04");
+
+      // 自动选择今天（格式为 YYYY-MM-DD）
+      const today = new Date().toISOString().split("T")[0];
+      const selector = document.getElementById("dateSelector");
+
+      if ([...selector.options].some(opt => opt.value === today)) {
+        selector.value = today;
+      } else {
+        // 如果今天没有数据就默认最后一天
+        selector.selectedIndex = selector.options.length - 1;
+      }
+
+      // 显示默认选中日期的数据
+      selector.dispatchEvent(new Event("change"));
+    });
+
+    // 假设后端传来的安全等级是: "safe" / "warning" / "danger"
+    const safetyLevelFromServer = "safe"; // 示例可替换为后端真实值
+
+    const indicator = document.getElementById("safety-indicator");
+    const statusText = document.getElementById("safety-level");
+
+    // 移除旧的类，添加新的类
+    indicator.classList.remove("safe", "warning", "danger");
+    indicator.classList.add(safetyLevelFromServer);
+
+    // 可选：更新状态文本
+    const statusMap = {
+      safe: "安全",
+      warning: "警告",
+      danger: "危险"
+    };
+    statusText.textContent = "当前状态：" + statusMap[safetyLevelFromServer];
+
+    // ========== 模拟数据源（可根据后端接口替换）==========
+    const mockData = {
+      "2025-07-04": {
+        numTarget: 10,
+        minDistance: "2.5 km",
+        path: [
+          [39.9042, 116.4074], // 北京
+          [39.9092, 116.4174],
+          [39.9142, 116.4274]
+        ]
+      },
+      "2025-07-05": {
+        numTarget: 15,
+        minDistance: "1.8 km",
+        path: [
+          [31.2304, 121.4737], // 上海
+          [31.2354, 121.4837],
+          [31.2404, 121.4937]
+        ]
+      },
+      "2025-07-06": {
+        numTarget: 8,
+        minDistance: "3.0 km",
+        path: [
+          [23.1291, 113.2644], // 广州
+          [23.1341, 113.2744],
+          [23.1391, 113.2844]
+        ]
+      }
+    };
+
+    // ========== 初始化 Leaflet 地图 ==========
+    const map = L.map('map').setView([39.9042, 116.4074], 13); // 默认北京
+
+    // 添加 OpenStreetMap 图层
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap 贡献者'
+    }).addTo(map);
+
+    let currentPolyline = null;
+
+    // ========== 监听下拉框选择事件 ==========
+    document.getElementById("dateSelector").addEventListener("change", function () {
+      const selectedDate = this.value;
+      const data = mockData[selectedDate];
+
+      if (data) {
+        document.getElementById("numTarget").textContent = data.numTarget;
+        document.getElementById("minDistance").textContent = data.minDistance;
+
+        // 清除旧路径
+        if (currentPolyline) {
+          map.removeLayer(currentPolyline);
+        }
+
+        // 绘制新路径
+        currentPolyline = L.polyline(data.path, { color: 'blue' }).addTo(map);
+
+        // 添加标记点
+        data.path.forEach(coord => {
+          L.marker(coord).addTo(map);
+        });
+
+        // 自动适配地图视口
+        map.fitBounds(currentPolyline.getBounds());
+      } else {
+        document.getElementById("numTarget").textContent = "--";
+        document.getElementById("minDistance").textContent = "--";
+
+        if (currentPolyline) {
+          map.removeLayer(currentPolyline);
+        }
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", function () {
+      window.location.href = "index.html";
+    });
+
+  </script>
+</body>
+</html>
